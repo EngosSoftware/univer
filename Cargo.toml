@@ -1,0 +1,31 @@
+[package]
+name = "univer"
+version = "0.0.0"
+authors = ["Dariusz Depta <depta@engos.de>"]
+description = "Unified versions publisher"
+repository = "https://github.com/EngosSoftware/univer.git"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+exclude = [
+    "rustfmt.toml",
+    "Taskfile.yml",
+    ".github/",
+    ".gitignore",
+    "CODE_OF_CONDUCT.md",
+    "manual/"
+]
+
+[lib]
+name = "univer"
+path = "src/lib.rs"
+
+[[bin]]
+name = "univer"
+path = "src/main.rs"
+
+[dependencies]
+antex = "0.1.0-rc.1"
+clap = { version = "4.5.57", features = ["cargo"] }
+
+[dev-dependencies]
+cli-assert = "0.1.12"
