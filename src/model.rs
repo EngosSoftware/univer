@@ -44,12 +44,16 @@ pub struct Workspace {
   /// Version defined in the `[workspace.package]`.
   version: String,
   /// Path to workspace manifest file.
-  pub manifest_path: Utf8PathBuf,
+  manifest_path: Utf8PathBuf,
   /// Workspace members (publishable).
   pub members: Vec<Member>,
 }
 
 impl Workspace {
+  pub fn version(&self) -> &str {
+    &self.version
+  }
+
   pub fn manifest_path(&self) -> &Utf8Path {
     &self.manifest_path
   }

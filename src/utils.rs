@@ -1,7 +1,10 @@
 use crate::errors::{Result, univer_error};
 use crate::model::Member;
+use antex::{StyledText, Text, auto};
 use petgraph::graph::{DiGraph, NodeIndex};
 use std::collections::HashMap;
+use std::io;
+use std::io::Write;
 use std::path::PathBuf;
 
 /// Default name of Rust manifest.
@@ -49,4 +52,26 @@ pub fn sort(members: Vec<Member>) -> Vec<Member> {
     sorted_members.push(member);
   }
   sorted_members
+}
+
+pub fn prompt(message: &str, accept: bool) -> Result<bool> {
+  #[rustfmt::skip]
+  fn prompt_text(prompt: &str) -> Text {
+    auto().bold().s(prompt).clear().s(" [").bold().underline().s('Y').clear().s("es/").bold().underline().s('N').clear().s("o/").bold().underline().s('A').clear().s("bort]: ")
+  }
+  if accept {
+    return Ok(true);
+  }
+  loop {
+    print!("{}", prompt_text(message));
+    io::stdout().flush().map_err(|e| univer_error!("failed to flush stdout, reason: {}", e))?;
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).map_err(|e| univer_error!("failed to read line, reason: {}", e))?;
+    match input.trim() {
+      "Y" => return Ok(true),
+      "N" => return Ok(false),
+      "A" => std::process::exit(1),
+      _ => println!("Please enter 'Y', 'N' or 'A'"),
+    }
+  }
 }
