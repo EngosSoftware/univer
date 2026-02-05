@@ -130,10 +130,7 @@ pub fn do_action() {
     Action::Develop(dir, accept_all) => {
       // Switch workspace crates to local development mode.
       match develop::develop(Path::new(&dir), accept_all) {
-        Ok(()) => {
-          //
-          println!("Development mode");
-        }
+        Ok(()) => {}
         Err(reason) => {
           eprintln!("{}", error_message(reason));
           std::process::exit(1);
