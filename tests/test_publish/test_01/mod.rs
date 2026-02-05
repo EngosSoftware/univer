@@ -40,7 +40,7 @@ fn _0001() {
   // Publish workspace crates.
   cli_assert::command!().code(0).arg("publish").arg("--dry-run").stdout("").stderr("").execute();
   // Make sure the Cargo.toml file is modified properly.
-  //assert_eq!(normalize(EXPECTED), std::fs::read_to_string(&original).unwrap());
+  assert_eq!(normalize(EXPECTED), std::fs::read_to_string(&original).unwrap());
   // Revert changes to Cargo.toml file.
   std::fs::copy(&backup, original).unwrap();
   std::fs::remove_file(backup).unwrap()

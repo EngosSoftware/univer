@@ -119,7 +119,7 @@ pub fn do_action() {
   match get_cli_action() {
     Action::Publish(dir, dry_run, accept_all) => {
       // Publish workspace crates.
-      match publish::publish(&dir, dry_run, accept_all) {
+      match publish::publish(Path::new(&dir), dry_run, accept_all) {
         Ok(()) => {}
         Err(reason) => {
           eprintln!("{}", error_message(reason));

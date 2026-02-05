@@ -6,11 +6,13 @@ use petgraph::graph::{DiGraph, NodeIndex};
 use std::collections::HashMap;
 use std::path::Path;
 
+#[derive(Debug, Default, Clone)]
 pub struct Dependency {
   /// Package name.
   pub name: String,
 }
 
+#[derive(Debug, Default, Clone)]
 pub struct Member {
   /// Package name.
   pub name: String,
@@ -38,6 +40,7 @@ impl Member {
   }
 }
 
+#[derive(Debug, Default, Clone)]
 pub struct Workspace {
   /// Path to workspace manifest file.
   pub manifest_path: Utf8PathBuf,
