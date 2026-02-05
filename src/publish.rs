@@ -17,9 +17,9 @@ pub fn publish(manifest_dir: &Path, dry_run: bool, accept_all: bool) -> Result<(
       members_to_publish.push(member.clone());
     } else if !manifest_content.contains(dependency_with_version) {
       return Err(univer_error!(
-        "dependency '{}' with path '{}' not found or has an invalid format, expected '{}'",
+        "dependency '{}' with path '{}' not found or has an invalid format, expected: {}",
         member.name,
-        member.version,
+        member.path,
         dependency_with_path
       ));
     }
