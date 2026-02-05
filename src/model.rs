@@ -41,6 +41,8 @@ impl Member {
 
 #[derive(Debug, Default, Clone)]
 pub struct Workspace {
+  /// Version defined in the `[workspace.package]`.
+  version: String,
   /// Path to workspace manifest file.
   pub manifest_path: Utf8PathBuf,
   /// Workspace members (publishable).
@@ -55,8 +57,8 @@ impl Workspace {
   /// Loads workspace metadata.
   pub fn load(manifest_dir: &Path) -> Result<Self> {
     let manifest_path = manifest_dir.join(RUST_MANIFEST_NAME);
-    // Perform custom validations.
-    validate(&manifest_path)?;
+    // Perform custom validations on workspace manifest.
+    let workspace_version = validate_workspace(&manifest_path)?;
     // Load metadata.
     let mut metadata_command = MetadataCommand::new();
     metadata_command.manifest_path(manifest_path);
@@ -88,14 +90,19 @@ impl Workspace {
         });
       }
     }
+    for member in &members {
+      // Perform custom validations on each member.
+      validate_member(member)?;
+    }
     Ok(Self {
+      version: workspace_version,
       manifest_path: workspace_root.join(RUST_MANIFEST_NAME),
       members,
     })
   }
 }
 
-fn validate(manifest_path: &Path) -> Result<()> {
+fn validate_workspace(manifest_path: &Path) -> Result<String> {
   let manifest_toml = utils::parse_toml(manifest_path)?;
   // Check if the manifest file is a workspace (required).
   let Some(workspace) = manifest_toml.get("workspace") else {
@@ -114,6 +121,98 @@ fn validate(manifest_path: &Path) -> Result<()> {
     return Err(univer_error!("'version' is not a string in [workspace.package] table"));
   };
   // Get the version defined in [workspace.package].
-  let _version = version.to_string();
+  let version = version.to_string();
+  // Check if the workspace has dependencies table (required).
+  let Some(dependencies_table) = workspace.get("dependencies") else {
+    return Err(univer_error!("missing [workspace.dependencies] table"));
+  };
+  // Check if dependencies is a table (required).
+  let Some(dependencies_table) = dependencies_table.as_table() else {
+    return Err(univer_error!("[workspace.dependencies] is not a table"));
+  };
+  // Check if no both 'path' and 'version' are set for dependency.
+  for (name, value) in dependencies_table {
+    let mut opt_path = None;
+    if let Some(path) = value.get("path") {
+      let Some(path) = path.as_str() else {
+        return Err(univer_error!("'path' is not a string for '{}' in [workspace.dependencies] table", name));
+      };
+      opt_path = Some(path);
+    }
+    let mut opt_version = None;
+    if let Some(version) = value.get("version") {
+      let Some(version) = version.as_str() else {
+        return Err(univer_error!("'version' is not a string for '{}' in [workspace.dependencies] table", name));
+      };
+      opt_version = Some(version);
+    }
+    if opt_path.is_some() && opt_version.is_some() {
+      return Err(univer_error!("dependency '{}' has 'path' and 'version' set in [workspace.dependencies] table", name));
+    }
+  }
+  Ok(version)
+}
+
+fn validate_member(member: &Member) -> Result<()> {
+  let manifest_toml = utils::parse_toml(&member.manifest_path)?;
+  let Some(package) = manifest_toml.get("package") else {
+    return Err(univer_error!("missing [package] section in manifest for dependency '{}'", member.name));
+  };
+  let Some(package_version) = package.get("version") else {
+    return Err(univer_error!("missing [package].version attribute in manifest for dependency '{}'", member.name));
+  };
+  let Some(package_version_workspace) = package_version.get("workspace") else {
+    return Err(univer_error!("missing [package].version.workspace attribute in manifest for dependency '{}'", member.name));
+  };
+  let Some(package_version_workspace_value) = package_version_workspace.as_bool() else {
+    return Err(univer_error!("invalid [package].version.workspace attribute in manifest for dependency '{}'", member.name));
+  };
+  if !package_version_workspace_value {
+    return Err(univer_error!("[package].version.workspace attribute in crate '{}' must have value 'true'", member.name));
+  }
+  if let Some(dependencies) = manifest_toml.get("dependencies") {
+    let Some(dependencies_table) = dependencies.as_table() else {
+      return Err(univer_error!("[dependencies] section is not a table in crate '{}'", member.name));
+    };
+    validate_crate_dependencies(dependencies_table, member)?;
+  }
+  if let Some(dev_dependencies) = manifest_toml.get("dev-dependencies") {
+    let Some(dev_dependencies_table) = dev_dependencies.as_table() else {
+      return Err(univer_error!("[dev-dependencies] section is not a table in crate '{}'", member.name));
+    };
+    validate_crate_dependencies(dev_dependencies_table, member)?;
+  }
+  Ok(())
+}
+
+fn validate_crate_dependencies(dependencies: &toml::Table, member: &Member) -> Result<()> {
+  // Iterate over all dependencies defined in the table.
+  for (key, value) in dependencies {
+    // Iterate over all member's dependencies.
+    for dependency in &member.dependencies {
+      if key == &dependency.name {
+        // Make sure the dependency is defined in the workspace manifest.
+        let Some(crate_dependency_workspace) = value.get("workspace") else {
+          return Err(univer_error!("missing dependency {key}.workspace attribute in crate '{}'", member.name));
+        };
+        // Make sure the workspace dependency is a boolean type.
+        let Some(crate_dependency_workspace_value) = crate_dependency_workspace.as_bool() else {
+          return Err(univer_error!("invalid dependency {key}.workspace attribute in crate '{}'", member.name));
+        };
+        // Make sure the workspace dependency has value 'true'.
+        if !crate_dependency_workspace_value {
+          return Err(univer_error!("dependency {key}.workspace attribute in crate '{}' must have value 'true'", member.name));
+        }
+        // Make sure that the workspace dependency has no 'version' attribute set.
+        if value.get("version").is_some() {
+          return Err(univer_error!("'{key}' dependency must not have 'version' attribute set in crate '{}'", member.name));
+        };
+        // Make sure that the workspace dependency has no 'path' attribute set.
+        if value.get("path").is_some() {
+          return Err(univer_error!("'{key}' dependency must not have 'path' attribute set in crate '{}'", member.name));
+        };
+      }
+    }
+  }
   Ok(())
 }
