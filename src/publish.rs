@@ -24,7 +24,7 @@ pub fn publish(manifest_dir: &Path, _dry_run: bool, _accept_all: bool) -> Result
     }
   }
 
-  for member in &members_to_publish {
+  for member in utils::sort(members_to_publish) {
     let dependency_with_path = &member.dependency_with_path();
     let dependency_with_version = &member.dependency_with_version();
     manifest_content = manifest_content.replace(dependency_with_path, dependency_with_version);

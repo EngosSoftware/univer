@@ -1,18 +1,17 @@
-use crate::errors::{Result, UniverError};
+use crate::errors::{Result, UniverError, univer_error};
+use crate::utils;
 use crate::utils::RUST_MANIFEST_NAME;
 use cargo_metadata::MetadataCommand;
 use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
-use petgraph::graph::{DiGraph, NodeIndex};
-use std::collections::HashMap;
 use std::path::Path;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct Dependency {
   /// Package name.
   pub name: String,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct Member {
   /// Package name.
   pub name: String,
@@ -56,6 +55,9 @@ impl Workspace {
   /// Loads workspace metadata.
   pub fn load(manifest_dir: &Path) -> Result<Self> {
     let manifest_path = manifest_dir.join(RUST_MANIFEST_NAME);
+    // Perform custom validations.
+    validate(&manifest_path)?;
+    // Load metadata.
     let mut metadata_command = MetadataCommand::new();
     metadata_command.manifest_path(manifest_path);
     let metadata = metadata_command.exec().map_err(|e| UniverError::new(format!("{}", e)))?;
@@ -91,30 +93,27 @@ impl Workspace {
       members,
     })
   }
+}
 
-  /// Returns the names of workspace members sorted in the publishing order.
-  pub fn publish_order(&self) -> Vec<String> {
-    let mut graph = DiGraph::<String, ()>::new();
-    let mut nodes: HashMap<String, NodeIndex> = HashMap::new();
-    // Add nodes.
-    for member in &self.members {
-      let node_index = graph.add_node(member.name.clone());
-      nodes.insert(member.name.clone(), node_index);
-    }
-    // Add edges.
-    for member in &self.members {
-      let member_node_index = nodes.get(&member.name).unwrap();
-      for dependency in &member.dependencies {
-        let dependency_node_index = nodes.get(&dependency.name).unwrap();
-        graph.add_edge(*dependency_node_index, *member_node_index, ());
-      }
-    }
-    let mut names = vec![];
-    let node_indexes = petgraph::algo::toposort(&graph, None).unwrap();
-    for node_index in node_indexes {
-      let name = graph.node_weight(node_index).unwrap().to_string();
-      names.push(name);
-    }
-    names
-  }
+fn validate(manifest_path: &Path) -> Result<()> {
+  let manifest_toml = utils::parse_toml(manifest_path)?;
+  // Check if the manifest file is a workspace (required).
+  let Some(workspace) = manifest_toml.get("workspace") else {
+    return Err(univer_error!("missing [workspace] table"));
+  };
+  // Check if the workspace manifest has a package section (required).
+  let Some(package) = workspace.get("package") else {
+    return Err(univer_error!("missing [workspace.package] table"));
+  };
+  // Check if the workspace manifest has defined the version to be published (required).
+  let Some(version) = package.get("version") else {
+    return Err(univer_error!("missing 'version' in [workspace.package] table"));
+  };
+  // Check if the version is a string (required).
+  let Some(version) = version.as_str() else {
+    return Err(univer_error!("'version' is not a string in [workspace.package] table"));
+  };
+  // Get the version defined in [workspace.package].
+  let _version = version.to_string();
+  Ok(())
 }
