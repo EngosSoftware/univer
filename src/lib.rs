@@ -3,6 +3,7 @@
 mod cli;
 mod develop;
 mod errors;
+mod model;
 mod publish;
 mod utils;
 
