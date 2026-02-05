@@ -26,6 +26,7 @@ path = "src/main.rs"
 [dependencies]
 antex = "0.1.0-rc.1"
 clap = { version = "4.5.57", features = ["cargo"] }
+cargo_metadata = "0.23.1"
 
 [dev-dependencies]
 cli-assert = "0.1.12"

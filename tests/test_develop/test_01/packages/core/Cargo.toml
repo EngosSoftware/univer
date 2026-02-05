@@ -1,0 +1,4 @@
+[package]
+name = "cosmwasm-core"
+version = { workspace = true }
+edition = "2021"

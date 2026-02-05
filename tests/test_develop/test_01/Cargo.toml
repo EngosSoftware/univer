@@ -1,0 +1,25 @@
+[workspace]
+members = ["packages/*"]
+
+resolver = "2"
+
+[workspace.package]
+version = "3.0.2"
+
+[workspace.dependencies]
+cosmwasm-core = { version = "3.0.2" }
+cosmwasm-crypto = { version = "3.0.2" }
+cosmwasm-derive = { version = "3.0.2" }
+cw-schema-derive = { version = "3.0.2" }
+cw-schema = { version = "3.0.2" }
+cosmwasm-schema-derive = { version = "3.0.2" }
+cosmwasm-schema = { version = "3.0.2" }
+cosmwasm-std = { version = "3.0.2", default-features = false }
+cosmwasm-vm-derive = { version = "3.0.2" }
+cosmwasm-vm = { version = "3.0.2" }
+cosmwasm-check = { version = "3.0.2" }
+go-gen = { path = "./packages/go-gen" }
+schemars = "1.2.1"
+serde = { version = "1.0.228", default-features = false, features = ["alloc", "derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"

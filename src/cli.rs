@@ -2,6 +2,7 @@ use crate::errors::*;
 use crate::{develop, publish};
 use antex::{StyledText, Text, auto};
 use clap::{Arg, ArgAction, ArgMatches, Command, command};
+use std::path::Path;
 
 enum Action {
   /// Publish workspace crates.
@@ -128,8 +129,11 @@ pub fn do_action() {
     }
     Action::Develop(dir, accept_all) => {
       // Switch workspace crates to local development mode.
-      match develop::develop(&dir, accept_all) {
-        Ok(()) => {}
+      match develop::develop(Path::new(&dir), accept_all) {
+        Ok(()) => {
+          //
+          println!("Development mode");
+        }
         Err(reason) => {
           eprintln!("{}", error_message(reason));
           std::process::exit(1);
