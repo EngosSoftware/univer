@@ -14,3 +14,5 @@ syn = { version = "2", features = ["extra-traits", "full", "printing"] }
 
 [lib]
 proc-macro = true
+name = "cosmwasm_schema_derive"
+path = "src/lib.rs"

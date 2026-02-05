@@ -2,3 +2,7 @@
 name = "cosmwasm-core"
 version = { workspace = true }
 edition = "2021"
+
+[lib]
+name = "cosmwasm_core"
+path = "src/lib.rs"

@@ -20,3 +20,12 @@ impl UniverError {
     Self(message.as_ref().to_string())
   }
 }
+
+macro_rules! univer_error {
+  ($($arg:tt)*) => {{
+    use crate::errors::UniverError;
+    UniverError::new(format!($($arg)*))
+  }};
+}
+
+pub(crate) use univer_error;

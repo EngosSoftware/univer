@@ -1,21 +1,25 @@
-use crate::errors::*;
+use crate::errors::{Result, univer_error};
 use crate::model::Workspace;
+use crate::utils;
 use std::path::Path;
 
-pub fn develop(manifest_dir: &Path, accept_all: bool) -> Result<()> {
-  let _workspace = Workspace::load(manifest_dir)?;
-
-  // let names = workspace.publish_order();
-  // println!("{:?}", names);
-  //
-  // for member in &workspace.members {
-  //   println!("{:30} {} {} {} {}", member.name, member.manifest_path, member.manifest_dir, member.path, member.publish);
-  //   for dependency in &member.dependencies {
-  //     println!("  - {:26}", dependency.name);
-  //   }
-  // }
-  //
-  // println!();
-
+pub fn develop(manifest_dir: &Path, _accept_all: bool) -> Result<()> {
+  let workspace = Workspace::load(manifest_dir)?;
+  let mut manifest_content = utils::read_file(workspace.manifest_path())?;
+  for member in &workspace.members {
+    let dependency_with_version = &member.dependency_with_version();
+    let dependency_with_path = &member.dependency_with_path();
+    if manifest_content.contains(dependency_with_version) {
+      manifest_content = manifest_content.replace(dependency_with_version, dependency_with_path);
+    } else {
+      return Err(univer_error!(
+        "dependency '{}' with version '{}' not found or has an invalid format, expected '{}'",
+        member.name,
+        member.version,
+        dependency_with_version
+      ));
+    }
+  }
+  utils::write_file(workspace.manifest_path(), manifest_content)?;
   Ok(())
 }

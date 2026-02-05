@@ -1,7 +1,7 @@
 use crate::errors::{Result, UniverError};
 use crate::utils::RUST_MANIFEST_NAME;
 use cargo_metadata::MetadataCommand;
-use cargo_metadata::camino::Utf8PathBuf;
+use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
 use petgraph::graph::{DiGraph, NodeIndex};
 use std::collections::HashMap;
 use std::path::Path;
@@ -14,33 +14,48 @@ pub struct Dependency {
 pub struct Member {
   /// Package name.
   pub name: String,
+  /// Package version.
+  pub version: String,
   /// Path to manifest file.
   pub manifest_path: Utf8PathBuf,
   /// Directory containing manifest file.
   pub manifest_dir: Utf8PathBuf,
   /// Package path.
   pub path: Utf8PathBuf,
-  /// Publish flag.
-  pub publish: bool,
   /// Dependencies to other members.
   pub dependencies: Vec<Dependency>,
 }
 
+impl Member {
+  /// Returns the dependency prefix with version number.
+  pub fn dependency_with_version(&self) -> String {
+    format!("{} = {{ version = \"{}\"", self.name, self.version)
+  }
+
+  /// Returns the dependency prefix with local path.
+  pub fn dependency_with_path(&self) -> String {
+    format!("{} = {{ path = \"{}\"", self.name, self.path)
+  }
+}
+
 pub struct Workspace {
-  /// Workspace root directory.
-  pub root: Utf8PathBuf,
+  /// Path to workspace manifest file.
+  pub manifest_path: Utf8PathBuf,
   /// Workspace members (publishable).
   pub members: Vec<Member>,
 }
 
 impl Workspace {
+  pub fn manifest_path(&self) -> &Utf8Path {
+    &self.manifest_path
+  }
+
   /// Loads workspace metadata.
   pub fn load(manifest_dir: &Path) -> Result<Self> {
     let manifest_path = manifest_dir.join(RUST_MANIFEST_NAME);
     let mut metadata_command = MetadataCommand::new();
     metadata_command.manifest_path(manifest_path);
     let metadata = metadata_command.exec().map_err(|e| UniverError::new(format!("{}", e)))?;
-
     let mut members = vec![];
     let workspace_root = &metadata.workspace_root;
     let member_names = metadata.workspace_packages().iter().map(|p| p.name.to_string()).collect::<Vec<String>>();
@@ -60,16 +75,16 @@ impl Workspace {
         }
         members.push(Member {
           name: package.name.to_string(),
+          version: package.version.to_string(),
           manifest_path: package_manifest_path.into(),
           manifest_dir: package_manifest_dir.into(),
           path: package_path.into(),
-          publish: package_publish,
           dependencies,
         });
       }
     }
     Ok(Self {
-      root: workspace_root.clone(),
+      manifest_path: workspace_root.join(RUST_MANIFEST_NAME),
       members,
     })
   }

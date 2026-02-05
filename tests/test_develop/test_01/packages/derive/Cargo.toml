@@ -10,6 +10,8 @@ readme = "README.md"
 
 [lib]
 proc-macro = true
+name = "cosmwasm_derive"
+path = "src/lib.rs"
 
 [features]
 default = []

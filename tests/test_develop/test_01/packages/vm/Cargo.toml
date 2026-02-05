@@ -36,6 +36,8 @@ ibc2 = ["cosmwasm-std/ibc2"]
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
 bench = false
+name = "cosmwasm_vm"
+path = "src/lib.rs"
 
 [dependencies]
 bytes = "1.4.0"     # need a higher version than the one required by Wasmer for the Bytes -> Vec<u8> implementation
