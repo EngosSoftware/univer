@@ -3,6 +3,7 @@ use crate::model::Workspace;
 use crate::utils;
 use std::path::Path;
 
+/// Switches workspace crates to local development mode.
 pub fn develop(manifest_dir: &Path, _accept_all: bool) -> Result<()> {
   let workspace = Workspace::load(manifest_dir)?;
   let mut manifest_content = utils::read_file(workspace.manifest_path())?;

@@ -1,8 +1,8 @@
-#[test]
-fn short() {
-  let expected = r#"Unified versions publisher
+use super::*;
 
-Usage: univer [COMMAND]
+const EXPECTED: &str = r#"Unified versions publisher
+
+Usage: univer||EXE|| [COMMAND]
 
 Commands:
   publish  Publish workspace crates
@@ -13,5 +13,8 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 "#;
-  cli_assert::command!().arg("-h").code(0).stdout(expected).stderr("").execute();
+
+#[test]
+fn short() {
+  cli_assert::command!().arg("-h").code(0).stdout(normalize_exe(EXPECTED)).stderr("").execute();
 }
