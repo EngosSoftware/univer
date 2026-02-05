@@ -5,9 +5,12 @@ use std::path::Path;
 pub fn develop(manifest_dir: &Path, accept_all: bool) -> Result<()> {
   let workspace = Workspace::load(manifest_dir)?;
 
-  for member in workspace.members {
+  let names = workspace.publish_order();
+  println!("{:?}", names);
+
+  for member in &workspace.members {
     println!("{:30} {} {} {} {}", member.name, member.manifest_path, member.manifest_dir, member.path, member.publish);
-    for dependency in member.dependencies {
+    for dependency in &member.dependencies {
       println!("  - {:26}", dependency.name);
     }
   }

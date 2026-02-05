@@ -2,6 +2,8 @@ use crate::errors::{Result, UniverError};
 use crate::utils::RUST_MANIFEST_NAME;
 use cargo_metadata::MetadataCommand;
 use cargo_metadata::camino::Utf8PathBuf;
+use petgraph::graph::{DiGraph, NodeIndex};
+use std::collections::HashMap;
 use std::path::Path;
 
 pub struct Dependency {
@@ -70,5 +72,31 @@ impl Workspace {
       root: workspace_root.clone(),
       members,
     })
+  }
+
+  /// Returns the names of workspace members sorted in the publishing order.
+  pub fn publish_order(&self) -> Vec<String> {
+    let mut graph = DiGraph::<String, ()>::new();
+    let mut nodes: HashMap<String, NodeIndex> = HashMap::new();
+    // Add nodes.
+    for member in &self.members {
+      let node_index = graph.add_node(member.name.clone());
+      nodes.insert(member.name.clone(), node_index);
+    }
+    // Add edges.
+    for member in &self.members {
+      let member_node_index = nodes.get(&member.name).unwrap();
+      for dependency in &member.dependencies {
+        let dependency_node_index = nodes.get(&dependency.name).unwrap();
+        graph.add_edge(*dependency_node_index, *member_node_index, ());
+      }
+    }
+    let mut names = vec![];
+    let node_indexes = petgraph::algo::toposort(&graph, None).unwrap();
+    for node_index in node_indexes {
+      let name = graph.node_weight(node_index).unwrap().to_string();
+      names.push(name);
+    }
+    names
   }
 }
