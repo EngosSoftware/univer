@@ -1,10 +1,6 @@
 use crate::errors::*;
 
-pub fn publish(working_dir: &str, timeout: u64, accept_all: bool, simulation: bool) -> Result<()> {
-  _ = (working_dir, timeout, accept_all, simulation);
-  if simulation {
-    Ok(())
-  } else {
-    Err(UniverError::new("no crates to publish"))
-  }
+pub fn publish(working_dir: &str, dry_run: bool, accept_all: bool) -> Result<()> {
+  _ = (working_dir, dry_run, accept_all);
+  if dry_run { Ok(()) } else { Err(UniverError::new("no crates to publish")) }
 }

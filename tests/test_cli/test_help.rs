@@ -5,7 +5,8 @@ fn short() {
 Usage: univer [COMMAND]
 
 Commands:
-  publish  Publish crates
+  publish  Publish workspace crates
+  develop  Switch workspace crates to local development mode
   help     Print this message or the help of the given subcommand(s)
 
 Options:

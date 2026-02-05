@@ -1,20 +1,23 @@
 use crate::errors::*;
+use crate::{develop, publish};
 use antex::{StyledText, Text, auto};
 use clap::{Arg, ArgAction, ArgMatches, Command, command};
-use crate::publish;
-
-/// Default timeout in seconds.
-const DEFAULT_TIMEOUT: u64 = 5;
 
 enum Action {
+  /// Publish workspace crates.
   Publish(
-    /// Path to the workspace manifest file.
+    /// Path to the manifest file of the workspace.
     String,
-    /// Number of seconds to wait after publishing each crate.
-    u64,
-    /// Flag indicating if all questions should be answered with 'Y'.
+    /// Perform all checks without publishing crates when `true`.
     bool,
-    /// Flag indicating if only simulate publishing crates.
+    /// All questions will be answered with `yes` when `true`.
+    bool,
+  ),
+  /// Switch workspace crates to local development mode.
+  Develop(
+    /// Path to the manifest file of the workspace.
+    String,
+    /// All questions will be answered with `yes` when `true`.
     bool,
   ),
   /// Do nothing.
@@ -26,47 +29,61 @@ fn get_matches() -> ArgMatches {
   command!()
     .subcommand(
       Command::new("publish")
-        .about("Publish crates")
-        .display_order(5)
+        .about("Publish workspace crates")
+        .display_order(1)
         .arg(
           Arg::new("dir")
             .short('d')
             .long("dir")
-            .help("Directory where the workspace manifest file is placed")
+            .help("Directory with workspace manifest")
             .default_value(".")
             .num_args(1)
             .action(ArgAction::Set)
-            .display_order(2),
+            .display_order(1),
         )
         .arg(
-          Arg::new("timeout")
-            .short('t')
-            .long("timeout")
-            .help("Number of seconds to wait after publishing each crate")
-            .default_value("5")
-            .num_args(1)
-            .action(ArgAction::Set)
-            .display_order(3),
+          Arg::new("dry-run")
+            .long("dry-run")
+            .help("Perform all checks without publishing")
+            .action(ArgAction::SetTrue)
+            .default_value("false")
+            .default_missing_value("true")
+            .display_order(2),
         )
         .arg(
           Arg::new("accept-all")
             .short('y')
             .long("accept-all")
-            .help("Answer all questions with 'Y'")
+            .help("Answer all questions with 'yes'")
             .action(ArgAction::SetTrue)
             .default_value("false")
             .default_missing_value("true")
-            .display_order(4),
+            .display_order(3),
+        ),
+    )
+    .subcommand(
+      Command::new("develop")
+        .about("Switch workspace crates to local development mode")
+        .display_order(2)
+        .arg(
+          Arg::new("dir")
+            .short('d')
+            .long("dir")
+            .help("Directory with workspace manifest")
+            .default_value(".")
+            .num_args(1)
+            .action(ArgAction::Set)
+            .display_order(1),
         )
         .arg(
-          Arg::new("simulation")
-            .short('s')
-            .long("simulation")
-            .help("Perform only a simulation, no crates will be published")
+          Arg::new("accept-all")
+            .short('y')
+            .long("accept-all")
+            .help("Answer all questions with 'yes'")
             .action(ArgAction::SetTrue)
             .default_value("false")
             .default_missing_value("true")
-            .display_order(5),
+            .display_order(2),
         ),
     )
     .get_matches()
@@ -79,10 +96,14 @@ fn get_cli_action() -> Action {
   match matches.subcommand() {
     Some(("publish", matches)) => {
       let dir = match_string(matches, "dir");
-      let timeout = match_string(matches, "timeout").parse::<u64>().unwrap_or(DEFAULT_TIMEOUT).clamp(0, 60);
+      let dry_run = match_boolean(matches, "dry-run");
       let accept_all = match_boolean(matches, "accept-all");
-      let simulation = match_boolean(matches, "simulation");
-      return Action::Publish(dir, timeout, accept_all, simulation);
+      return Action::Publish(dir, dry_run, accept_all);
+    }
+    Some(("develop", matches)) => {
+      let dir = match_string(matches, "dir");
+      let accept_all = match_boolean(matches, "accept-all");
+      return Action::Develop(dir, accept_all);
     }
     _ => {}
   }
@@ -94,11 +115,20 @@ pub fn do_action() {
     auto().bold().red().s("error").clear().s(": ").s(reason.to_string())
   }
 
-  //
   match get_cli_action() {
-    Action::Publish(dir, timeout, accept_all, simulation) => {
-      // Publish crates.
-      match publish::publish(&dir, timeout, accept_all, simulation) {
+    Action::Publish(dir, dry_run, accept_all) => {
+      // Publish workspace crates.
+      match publish::publish(&dir, dry_run, accept_all) {
+        Ok(()) => {}
+        Err(reason) => {
+          eprintln!("{}", error_message(reason));
+          std::process::exit(1);
+        }
+      }
+    }
+    Action::Develop(dir, accept_all) => {
+      // Switch workspace crates to local development mode.
+      match develop::develop(&dir, accept_all) {
         Ok(()) => {}
         Err(reason) => {
           eprintln!("{}", error_message(reason));
@@ -107,7 +137,7 @@ pub fn do_action() {
       }
     }
     Action::Nothing => {
-      // No specific action was requested.
+      // No action was requested.
     }
   }
 }
