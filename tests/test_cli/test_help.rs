@@ -2,7 +2,7 @@ use super::*;
 
 const EXPECTED: &str = r#"Unified versions publisher
 
-Usage: univer||EXE|| [COMMAND]
+Usage: univer||E|| [COMMAND]
 
 Commands:
   publish  Publish workspace crates

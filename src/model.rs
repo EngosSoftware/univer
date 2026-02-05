@@ -23,7 +23,7 @@ pub struct Member {
   /// Directory containing manifest file.
   pub manifest_dir: Utf8PathBuf,
   /// Package path.
-  pub path: Utf8PathBuf,
+  pub path: String,
   /// Dependencies to other members.
   pub dependencies: Vec<Dependency>,
 }
@@ -81,7 +81,7 @@ impl Workspace {
           version: package.version.to_string(),
           manifest_path: package_manifest_path.into(),
           manifest_dir: package_manifest_dir.into(),
-          path: package_path.into(),
+          path: package_path.to_string().replace("\\", "/"),
           dependencies,
         });
       }
