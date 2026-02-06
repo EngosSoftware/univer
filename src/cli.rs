@@ -113,7 +113,7 @@ fn get_cli_action() -> Action {
 
 pub fn do_action() {
   fn error_message(reason: UniverError) -> Text {
-    auto().bold().red().s("error").clear().s(": ").s(reason.to_string())
+    auto().bold().red().s("error").normal().s(": ").s(reason.to_string())
   }
 
   match get_cli_action() {
