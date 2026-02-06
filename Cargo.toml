@@ -1,6 +1,6 @@
 [package]
 name = "univer"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["Dariusz Depta <depta@engos.de>"]
 description = "Unified versions publisher"
 repository = "https://github.com/EngosSoftware/univer.git"
