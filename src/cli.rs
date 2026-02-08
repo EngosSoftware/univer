@@ -13,12 +13,16 @@ enum Action {
     bool,
     /// All questions will be answered with `yes` when `true`.
     bool,
+    /// Fixed versions.
+    bool,
   ),
   /// Switch workspace crates to local development mode.
   Develop(
     /// Path to the manifest file of the workspace.
     String,
     /// All questions will be answered with `yes` when `true`.
+    bool,
+    /// Fixed versions.
     bool,
   ),
   /// Do nothing.
@@ -60,6 +64,15 @@ fn get_matches() -> ArgMatches {
             .default_value("false")
             .default_missing_value("true")
             .display_order(3),
+        )
+        .arg(
+          Arg::new("fixed-versions")
+            .long("fixed-versions")
+            .help("Use fixed version numbers")
+            .action(ArgAction::SetTrue)
+            .default_value("false")
+            .default_missing_value("true")
+            .display_order(4),
         ),
     )
     .subcommand(
@@ -85,6 +98,15 @@ fn get_matches() -> ArgMatches {
             .default_value("false")
             .default_missing_value("true")
             .display_order(2),
+        )
+        .arg(
+          Arg::new("fixed-versions")
+            .long("fixed-versions")
+            .help("Use fixed version numbers")
+            .action(ArgAction::SetTrue)
+            .default_value("false")
+            .default_missing_value("true")
+            .display_order(4),
         ),
     )
     .get_matches()
@@ -99,12 +121,14 @@ fn get_cli_action() -> Action {
       let dir = match_string(matches, "dir");
       let dry_run = match_boolean(matches, "dry-run");
       let accept_all = match_boolean(matches, "accept-all");
-      return Action::Publish(dir, dry_run, accept_all);
+      let fixed_version = match_boolean(matches, "fixed-versions");
+      return Action::Publish(dir, dry_run, accept_all, fixed_version);
     }
     Some(("develop", matches)) => {
       let dir = match_string(matches, "dir");
       let accept_all = match_boolean(matches, "accept-all");
-      return Action::Develop(dir, accept_all);
+      let fixed_version = match_boolean(matches, "fixed-versions");
+      return Action::Develop(dir, accept_all, fixed_version);
     }
     _ => {}
   }
@@ -117,9 +141,9 @@ pub fn do_action() {
   }
 
   match get_cli_action() {
-    Action::Publish(dir, dry_run, accept_all) => {
+    Action::Publish(dir, dry_run, accept_all, fixed_version) => {
       // Publish workspace crates.
-      match publish::publish(Path::new(&dir), dry_run, accept_all) {
+      match publish::publish(Path::new(&dir), dry_run, accept_all, fixed_version) {
         Ok(()) => {}
         Err(reason) => {
           eprintln!("{}", error_message(reason));
@@ -127,9 +151,9 @@ pub fn do_action() {
         }
       }
     }
-    Action::Develop(dir, accept_all) => {
+    Action::Develop(dir, accept_all, fixed_version) => {
       // Switch workspace crates to local development mode.
-      match develop::develop(Path::new(&dir), accept_all) {
+      match develop::develop(Path::new(&dir), accept_all, fixed_version) {
         Ok(()) => {}
         Err(reason) => {
           eprintln!("{}", error_message(reason));

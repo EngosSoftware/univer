@@ -5,14 +5,14 @@ use antex::{StyledText, auto};
 use std::ffi::OsStr;
 use std::path::Path;
 
-pub fn publish(manifest_dir: &Path, dry_run: bool, accept_all: bool) -> Result<()> {
+pub fn publish(manifest_dir: &Path, dry_run: bool, accept_all: bool, fixed_version: bool) -> Result<()> {
   let workspace = Workspace::load(manifest_dir)?;
   let mut manifest_content = utils::read_file(workspace.manifest_path())?;
   // Select members with path to be published.
   let mut members_to_publish = vec![];
   for member in &workspace.members {
     let dependency_with_path = &member.dependency_with_path();
-    let dependency_with_version = &member.dependency_with_version();
+    let dependency_with_version = &member.dependency_with_version(fixed_version);
     if manifest_content.contains(dependency_with_path) {
       members_to_publish.push(member.clone());
     } else if !manifest_content.contains(dependency_with_version) {
@@ -77,7 +77,7 @@ pub fn publish(manifest_dir: &Path, dry_run: bool, accept_all: bool) -> Result<(
       execute_command("cargo", ["publish", "--color=always"], &member.manifest_dir)?;
     }
     let dependency_with_path = &member.dependency_with_path();
-    let dependency_with_version = &member.dependency_with_version();
+    let dependency_with_version = &member.dependency_with_version(fixed_version);
     manifest_content = manifest_content.replace(dependency_with_path, dependency_with_version);
     utils::write_file(workspace.manifest_path(), &manifest_content)?;
   }

@@ -29,8 +29,8 @@ pub struct Member {
 
 impl Member {
   /// Returns the dependency prefix with version number.
-  pub fn dependency_with_version(&self) -> String {
-    format!("{} = {{ version = \"{}\"", self.name, self.version)
+  pub fn dependency_with_version(&self, fixed_version: bool) -> String {
+    format!("{} = {{ version = \"{}{}\"", self.name, if fixed_version { "=" } else { "" }, self.version)
   }
 
   /// Returns the dependency prefix with local path.
