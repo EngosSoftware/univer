@@ -32,7 +32,7 @@ pub fn publish(manifest_dir: &Path, dry_run: bool, accept_all: bool, fixed_versi
   let members_to_publish = utils::sort(members_to_publish);
   // Ask if the version to be published is correct.
   println!();
-  println!("Publish version: {}", auto().bold().green().s(workspace.version()).normal());
+  println!("Publish version: {}", auto().bold().green().s(workspace.version()).reset());
   if !dry_run && !utils::prompt("Is this version correct?", accept_all)? {
     return Ok(());
   }
@@ -42,8 +42,8 @@ pub fn publish(manifest_dir: &Path, dry_run: bool, accept_all: bool, fixed_versi
   for member in &members_to_publish {
     println!(
       "{}  {}  {}",
-      auto().bold().blue().s(&member.name).normal(),
-      auto().bold().green().s('v').s(workspace.version()).normal(),
+      auto().bold().blue().s(&member.name).reset(),
+      auto().bold().green().s('v').s(workspace.version()).reset(),
       member.path
     );
   }
@@ -57,9 +57,9 @@ pub fn publish(manifest_dir: &Path, dry_run: bool, accept_all: bool, fixed_versi
     // Ask if perform dry-run before publishing.
     println!(
       "\n{} {} {} {}",
-      auto().bold().bg_yellow().s("  DRY-RUN  ").normal(),
-      auto().bold().blue().s(&member.name).normal(),
-      auto().bold().green().s('v').s(workspace.version()).normal(),
+      auto().bold().bg_yellow().s("  DRY-RUN  ").reset(),
+      auto().bold().blue().s(&member.name).reset(),
+      auto().bold().green().s('v').s(workspace.version()).reset(),
       member.path
     );
     if !dry_run && utils::prompt("Perform dry-run before publishing this crate?", accept_all)? {
@@ -68,9 +68,9 @@ pub fn publish(manifest_dir: &Path, dry_run: bool, accept_all: bool, fixed_versi
     // Ask if publish the crate.
     println!(
       "\n{} {} {} {}",
-      auto().bold().bg_red().s("  PUBLISH  ").normal(),
-      auto().bold().blue().s(&member.name).normal(),
-      auto().bold().green().s('v').s(workspace.version()).normal(),
+      auto().bold().bg_red().s("  PUBLISH  ").reset(),
+      auto().bold().blue().s(&member.name).reset(),
+      auto().bold().green().s('v').s(workspace.version()).reset(),
       member.path
     );
     if !dry_run && utils::prompt("Publish this crate?", accept_all)? {

@@ -57,7 +57,7 @@ pub fn sort(members: Vec<Member>) -> Vec<Member> {
 pub fn prompt(message: &str, accept: bool) -> Result<bool> {
   #[rustfmt::skip]
   fn prompt_text(prompt: &str) -> Text {
-    auto().bold().s(prompt).normal().s(" [").bold().underline().s('Y').normal().s("es/").bold().underline().s('N').normal().s("o/").bold().underline().s('A').normal().s("bort]: ")
+    auto().bold().s(prompt).reset().s(" [").bold().underline().s('Y').reset().s("es/").bold().underline().s('N').reset().s("o/").bold().underline().s('A').reset().s("bort]: ")
   }
   if accept {
     return Ok(true);
